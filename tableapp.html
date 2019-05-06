@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title> C.R.U.D Operations using Angular</title>
+</head>
+<style>
+#people{
+text-align:center;
+}
+#cap{
+margin:2px;
+padding:4px 0;
+}
+.bt{
+margin: 5px 0px;
+height: 100px;
+padding:30px;
+align-content:center;
+display: flex;
+justify-content: center;
+}
+.container{
+width:100%;
+}
+</style>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
+<body>
+
+<div ng-app="myApp" ng-controller="customersCtrl" class="container" >
+
+<div class="row">
+<div class="col-md-4 col-sm-4 col-xs-4 bt"><button ng-click="createTable()" ng-disabled="buttonHide" class="btn btn-primary btn-md">Create Table</button></div>
+<div class="col-md-4 col-sm-4 col-xs-4 bt"><button ng-click="deleteTable()" ng-disabled="buttonHide" class="btn btn-danger btn-md">Remove Table</button></div>
+<div class="col-md-4 col-sm-4 col-xs-4 bt"><button ng-click="addEntry()" ng-disabled="buttonHide" ng-if="showTable" class="btn btn-success btn-md">Add entry</button></div>
+</div>
+
+<div class="row">
+<div id="people" class="col-md-8 col-sm-6 col-xs-12 ">
+<table ng-if="showTable" class="table table-hover table-responsive table-striped">
+  <caption id="cap">Dhiren's Table</caption>
+  <tr><th ng-click=sort('id')>ID number</th><th ng-click=sort('Names')>Names</th><th ng-click=sort('Country')>Country</th><th>Edit</th><th>Remove</th></tr>
+  <tr ng-repeat="x in names|orderBy : parameter">
+	<td>{{ x.id }}</td>
+    <td>{{ x.Name }}</td>
+    <td>{{ x.Country }}</td>
+	<td><button ng-click="showEditfxn(x)" ng-disabled="buttonHide" class="btn btn-info btn-md">Update</button></td>
+	<td><button ng-click="deleteObj(x)" ng-disabled="buttonHide" class="btn btn-warning btn-md">Delete</button></td>
+  </tr>
+</table>
+</div>
+
+<div id="forms" class="col-md-4 col-sm-6 col-xs-12">
+ <form name="update-form" ng-show="showForm" style="float: right;"><br>
+	Enter Name :<input type="text" ng-model="editObj.Name" class="form-control"><br>
+	Enter Country :<input type="text" ng-model="editObj.Country" class="form-control"><br>
+	<button ng-click="updateFn(editObj)" class="btn btn-success btn-md">Save</button>
+	<button ng-click="showForm = false; buttonHide=false;" class="btn btn-success btn-md">Cancel</button>
+ </form>
+
+ <form name="addEntry-form" ng-show="showEntryForm" style="float: right;"><br>
+	Enter Name :<input type="text" ng-model="newObj.Name" class="form-control"><br>
+	Enter Country :<input type="text" ng-model="newObj.Country" class="form-control"><br>
+	Enter City :<input type="text" ng-model="newObj.City" class="form-control"><br>
+	Enter id :<input type="text" ng-model="newObj.id" class="form-control"><br>
+	<button ng-click="AddToDataset(newObj)"class="btn btn-success btn-md">Add</button>
+	<button ng-click="showEntryForm = false; buttonHide=false;" class="btn btn-success btn-md">Cancel</button>
+ </form>
+</div>
+
+</div>  <!--end of 2nd row div-->
+</div> <!--end of application-->
+
+<script>
+var app = angular.module('myApp', []);
+app.controller('customersCtrl', function($scope, $http, $timeout)
+{
+
+	$scope.showTable = false; // boolean variables use to show/hide forms, Table, Buttons
+	$scope.showForm = false;
+	$scope.showEntryForm = false;
+	$scope.buttonHide = false;
+	
+	$scope.newObj={};
+	
+	function getUniqueId()
+	{
+		return Math.floor((Math.random() * 100) + 1);
+	}
+	
+	$scope.sortCalling = function() //assigning unique id to each row
+	{
+		$http.get("https://www.w3schools.com/angular/customers.php").then(function (response) // or we can use .success( function()) method
+		{
+			$scope.names = response.data.records;
+			//$scope.namesObj = angular.copy(response.data.records);
+			angular.forEach($scope.names, function(value, key) 
+			{
+			return value.id = getUniqueId();
+			});	
+		});
+	};
+	
+	$scope.sort= function(val)
+	{
+		$scope.parameter=val;
+	};
+	
+	$scope.editObj = {};
+	$scope.showEditfxn =function(obj)
+	{
+		$scope.showForm = true;
+		$scope.buttonHide = true;
+		$scope.editObj.id = obj.id;
+		$scope.editObj.Name = obj.Name;
+		$scope.editObj.Country = obj.Country;
+	};
+	 
+	$scope.makeTrue = false;
+	$scope.updateFn = function(obj1)
+	{
+		for (var i = 0; i < $scope.names.length; i++)
+		{
+			var idObj = $scope.names[i];
+			if (idObj.id == obj1.id)
+			{
+				//alert("Id found");
+				$scope.names.splice(i, 1);
+				$scope.makeTrue = true;
+				
+				break;
+			}
+		}
+		if($scope.makeTrue)
+		{
+		$scope.names.push(obj1);
+		}
+		
+		//alert("tempName..............."+JSON.stringify($scope.names)); //this is nice method to see values at different instances
+		$timeout(function(){$scope.showForm = false;},3000)
+		$scope.buttonHide = false;
+	};
+	
+	$scope.deleteObj =function(obj1)
+	{
+		for( i in $scope.names )
+		{
+			if(obj1.id == $scope.names[i].id)
+			{
+				if (confirm("Are you sure you want to delete the item"))
+				{
+				$scope.names.splice(i,1); //only method to remove element from specific position in array
+				} else 
+				{
+				break;
+				}
+			}
+		
+		}
+	}
+	$scope.addEntry =function()
+	{
+		$scope.showEntryForm = true;
+	}
+	$scope.AddToDataset =function(newObj)
+	{
+		$scope.names.push(newObj);
+		$timeout(function(){$scope.showEntryForm = false;},3000)
+	}
+	$scope.createTable =function()
+	{
+		$scope.showTable = true;
+	}
+	$scope.deleteTable =function()
+	{
+		$scope.showTable = false;
+	}
+	$scope.sortCalling();
+	
+});
+</script>
+
+</body>
+</html>
